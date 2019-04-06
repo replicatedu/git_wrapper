@@ -30,7 +30,7 @@ pub fn gen_rsa_keys(path: &str) {
                    ssh-keygen -f ./deploy_key -N '' -t rsa && \
                    echo \"paste the following into deploy keys\" && \
                    cat deploy_key.pub &&
-                   ssh-add -y -K ./deploy_key";
+                   ssh-add ./deploy_key";
     let mut c = command_wrapper(&command, ".");
     let c_out = c.output().expect("gen_rsa_keys failed");
     println!(
@@ -42,7 +42,7 @@ pub fn gen_rsa_keys(path: &str) {
                    ssh-keygen -f ./deploy_key -N '' -t rsa && \
                    echo \"paste the following into deploy keys\" && \
                    cat deploy_key.pub &&
-                   ssh-add -y -K ./deploy_key";
+                   ssh-add ./deploy_key";
     let mut c = command_wrapper(&command, path);
     let c_out = c.output().expect("gen_rsa_keys failed");
     println!(
@@ -130,6 +130,18 @@ pub fn time_since_epoch() -> String {
     since_the_epoch.as_millis().to_string()
 }
 
+pub fn pull_class_repo(repopath: &str, folder: &str) {
+    let owned_string: String = "git clone ".to_owned();
+    let command = owned_string + repopath;
+    let mut c = command_wrapper(&command, folder);
+    let c_out = c.output().expect("add_file failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
 pub fn create_repo(username: &str, password: &str, repo_name: &str, path: &str) {
     //curl --url url -K- <<< "--user user:password"
     let mut command = String::new();
@@ -143,6 +155,31 @@ pub fn create_repo(username: &str, password: &str, repo_name: &str, path: &str) 
 
     let mut c = command_wrapper(&command, path);
     let c_out = c.output().expect("create_repo failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
+//https://developer.github.com/v3/repos/keys/
+//POST /repos/:owner/:repo/keys
+pub fn add_deploy_key(username: &str, password: &str, repo_name: &str, path: &str,key: &str) {
+    //curl --url url -K- <<< "--user user:password"
+    let mut command = String::new();
+    command.push_str(&format!(
+        "curl --url https://api.github.com/repos/{}/{}/keys ",
+        username, repo_name
+    ));
+    command.push_str(&format!(
+        "-X POST -d '{{\"title\":\"instructor_key@key\",\"key\":\"{}\",\"read_only\":false}}' ",
+        key.trim()
+    ));
+    command.push_str(&format!("--user \"{}:{}\"", username, password));
+    println!("{}", command);
+
+    let mut c = command_wrapper(&command, path);
+    let c_out = c.output().expect("add_deploy_key failed");
     println!(
         "STD_OUT\n{}\nSTDERR\n{}",
         String::from_utf8_lossy(&c_out.stdout),
@@ -164,14 +201,14 @@ pub fn clone_repo_to_private(
 ) {
     let mut command = String::new();
     command.push_str(&format!("rm -rf {}.git && ", repo_name));
-    command.push_str(&format!("git clone --bare {} && ", class_repo_address));
-    command.push_str(&format!("cd {}.git && ", repo_name));
+    command.push_str(&format!("git clone --bare {} {} && ", class_repo_address, repo_name));
+    command.push_str(&format!("cd {} && ", repo_name));
     command.push_str(&format!(
         "git push --mirror https://{}:{}@github.com/{}/{}.git && ",
         username, password, username, repo_name
     ));
     command.push_str("cd .. && ");
-    command.push_str(&format!("rm -rf {}.git", repo_name));
+    command.push_str(&format!("rm -rf {}", repo_name));
     println!("{}", command);
 
     let mut c = command_wrapper(&command, path);
@@ -183,27 +220,28 @@ pub fn clone_repo_to_private(
     );
 }
 
-//update from old repo
-// cd private-repo
-// git remote add public https://github.com/exampleuser/public-repo.git
-// git pull public master # Creates a merge commit
-// git push origin master
-pub fn update_from_public_repo( &self){
-    let mut command = String::new();
-    command.push_str("git pull public");
-    let mut c = command_wrapper(&command, "/tmp/");
-    let c_out = c.output().expect("clone_repo_to_private failed");
-    println!(
-        "STD_OUT\n{}\nSTDERR\n{}",
-        String::from_utf8_lossy(&c_out.stdout),
-        String::from_utf8_lossy(&c_out.stderr)
-    );
-}
-
-
 #[cfg(test)]
 mod tests {
+    use std::env;
     use super::*;
+    use std::fs::File;
+    use std::io::prelude::*;
     #[test]
-    fn gen_test_keypair() {}
+    fn test_create_repo(){
+        let test_repo = "https://github.com/replicatedu/test_class";
+        let repo_name = "test_class_hortinstein";
+        let username = "hortinstein";
+        let path = "/tmp/";
+        let password = env::var("GITHUB_PASSWORD").expect("set the GITHUB_PASSWORD env");
+        let key = "NO KEY";
+    
+        create_repo(username, &password, repo_name, path);
+        gen_rsa_keys("/tmp");
+        let mut file = File::open("/tmp/deploy_key.pub").expect("key not there");
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).expect("error reading key");
+        add_deploy_key(username, &password, repo_name, path, &contents);
+    }
+
+
 }
