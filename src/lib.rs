@@ -94,11 +94,26 @@ pub fn turn_on_host_checks() {
 }
 
 pub fn add_file(filename: &str, repo_path: &str) {
-    let mut command: String = "touch ".to_owned();
-    command += &filename;
-    command += " && git pull ";
+    let mut command: String = "".to_owned();
+    command += "git pull ";
     command += " && git add ";
     command += &filename;
+    command += " && git commit -a -m \"added a new file\" ";
+    command += "&& git push origin master";
+    println!("running: {}", command);
+    let mut c = command_wrapper(&command, repo_path);
+    let c_out = c.output().expect("add_file failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
+pub fn add_files(repo_path: &str) {
+    let mut command: String = "touch ".to_owned();
+    command += "git pull ";
+    command += " && git add .";
     command += " && git commit -a -m \"added a new file\" ";
     command += "&& git push origin master";
     println!("running: {}", command);
@@ -210,7 +225,6 @@ pub fn clone_repo_to_private(
     command.push_str("cd .. && ");
     command.push_str(&format!("rm -rf {}", repo_name));
     println!("{}", command);
-
     let mut c = command_wrapper(&command, path);
     let c_out = c.output().expect("clone_repo_to_private failed");
     println!(
