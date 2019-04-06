@@ -183,6 +183,24 @@ pub fn clone_repo_to_private(
     );
 }
 
+//update from old repo
+// cd private-repo
+// git remote add public https://github.com/exampleuser/public-repo.git
+// git pull public master # Creates a merge commit
+// git push origin master
+pub fn update_from_public_repo( &self){
+    let mut command = String::new();
+    command.push_str("git pull public");
+    let mut c = command_wrapper(&command, "/tmp/");
+    let c_out = c.output().expect("clone_repo_to_private failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
