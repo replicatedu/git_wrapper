@@ -252,7 +252,7 @@ pub fn add_deploy_key(username: &str, password: &str, repo_name: &str, path: &st
 // git push --mirror https://github.com/yourname/private-repo.git
 // cd ..
 // rm -rf public-repo.git
-pub fn clone_repo_to_private(
+pub fn clone_class_repo_to_private(
     username: &str,
     password: &str,
     repo_name: &str,
@@ -260,14 +260,16 @@ pub fn clone_repo_to_private(
     class_repo_address: &str,
 ) {
     let mut command = String::new();
-    command.push_str(&format!("rm -rf {}.git && ", repo_name));
     command.push_str(&format!(
-        "git clone --bare {} {} && ",
-        class_repo_address, repo_name
+        "git clone https://{}:{}@github.com/{}/{} && ",
+        username, password, username, repo_name
     ));
     command.push_str(&format!("cd {} && ", repo_name));
+    command.push_str(&format!("git remote add class_upstream {} && ", class_repo_address));
+    command.push_str("git fetch class_upstream && ");
+    command.push_str("git merge class_upstream/master && ");
     command.push_str(&format!(
-        "git push --mirror https://{}:{}@github.com/{}/{}.git && ",
+        " git push --mirror https://{}:{}@github.com/{}/{}.git && ",
         username, password, username, repo_name
     ));
     command.push_str("cd .. && ");
@@ -283,6 +285,13 @@ pub fn clone_repo_to_private(
     );
 }
 
+//update from old repo
+// cd private-repo
+// git remote add public https://github.com/exampleuser/public-repo.git
+// git pull public master # Creates a merge commit
+// git push origin master
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -292,7 +301,7 @@ mod tests {
     #[test]
     fn test_create_repo() {
         let test_repo = "https://github.com/replicatedu/test_class";
-        let repo_name = "test_class_hortinstein";
+        let repo_name = "tst";
         let username = "hortinstein";
         let path = "/tmp/";
         let password = env::var("GITHUB_PASSWORD").expect("set the GITHUB_PASSWORD env");
@@ -305,6 +314,7 @@ mod tests {
         file.read_to_string(&mut contents)
             .expect("error reading key");
         add_deploy_key(username, &password, repo_name, path, &contents);
+        clone_class_repo_to_private(username, &password, repo_name, path, test_repo);
     }
 
 }
