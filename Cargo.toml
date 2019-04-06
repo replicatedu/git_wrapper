@@ -1,0 +1,20 @@
+[package]
+name = "git_wrapper"
+version = "0.1.0"
+authors = ["alex <hortinstein@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+class_crypto = { git = "https://github.com/replicatedu/class_crypto.git" }
+hex = "0.3.2"
+serde_derive = "1.0"
+serde = "1.0"
+toml = "0.5.0"
+
+[dev-dependencies]
+
+[profile.release]
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic
