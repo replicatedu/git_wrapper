@@ -222,6 +222,27 @@ pub fn create_repo(username: &str, password: &str, repo_name: &str, path: &str) 
     );
 }
 
+pub fn create_repo_pub(username: &str, password: &str, repo_name: &str, path: &str) {
+    //curl --url url -K- <<< "--user user:password"
+    let mut command = String::new();
+    command.push_str("curl --url https://api.github.com/user/repos ");
+    command.push_str(&format!(
+        "-d '{{\"name\":\"{}\",\"private\":false}}' ",
+        repo_name
+    ));
+    command.push_str(&format!("--user \"{}:{}\"", username, password));
+    println!("{}", command);
+
+    let mut c = command_wrapper(&command, path);
+    let c_out = c.output().expect("create_repo failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
+
 // echo "# add" >> README.md
 // git init
 // git add README.md
