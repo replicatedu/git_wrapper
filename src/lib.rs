@@ -222,6 +222,40 @@ pub fn create_repo(username: &str, password: &str, repo_name: &str, path: &str) 
     );
 }
 
+// echo "# add" >> README.md
+// git init
+// git add README.md
+// git commit -m "first commit"
+// git remote add origin https://github.com/hortinstein/add.git
+// git push -u origin master
+pub fn init_repo(
+    username: &str,
+    password: &str,
+    repo_name: &str,
+    path: &str,
+) {
+    let mut command = String::new();
+    command.push_str("git init && ");
+    command.push_str("git add . && git commit -a -m \"initial commit\" && ");
+    command.push_str(&format!(
+        "git remote add origin https://github.com/{}/{}.git && ",
+         username, repo_name
+    ));
+    command.push_str(&format!(
+        " git push --mirror https://{}:{}@github.com/{}/{}.git",
+        username, password, username, repo_name
+    ));
+    println!("{}", command);
+
+    let mut c = command_wrapper(&command, path);
+    let c_out = c.output().expect("init failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
 //https://developer.github.com/v3/repos/keys/
 //POST /repos/:owner/:repo/keys
 pub fn add_deploy_key(username: &str, password: &str, repo_name: &str, path: &str, key: &str) {
