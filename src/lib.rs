@@ -349,7 +349,7 @@ pub fn clone_repo_to_dir(
 ) {
     let mut command = String::new();
     command.push_str(&format!(
-        "git clone https://{}:{}@github.com/{}/{} {} && ",
+        "git clone https://{}:{}@github.com/{}/{} {} ",
         username, password, username, repo_name, repo_name
     ));
     println!("{}", command);
