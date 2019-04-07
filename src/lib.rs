@@ -319,6 +319,29 @@ pub fn clone_class_repo_to_private(
     );
 }
 
+
+pub fn clone_repo_to_dir(
+    username: &str,
+    password: &str,
+    repo_name: &str,
+    path: &str
+) {
+    let mut command = String::new();
+    command.push_str(&format!(
+        "git clone https://{}:{}@github.com/{}/{} {} && ",
+        username, password, username, repo_name, repo_name
+    ));
+    println!("{}", command);
+
+    let mut c = command_wrapper(&command, path);
+    let c_out = c.output().expect("clone_repo_to_private failed");
+    println!(
+        "STD_OUT\n{}\nSTDERR\n{}",
+        String::from_utf8_lossy(&c_out.stdout),
+        String::from_utf8_lossy(&c_out.stderr)
+    );
+}
+
 //update from old repo
 // cd private-repo
 // git remote add public https://github.com/exampleuser/public-repo.git
